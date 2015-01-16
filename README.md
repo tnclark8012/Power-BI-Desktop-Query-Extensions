@@ -1,5 +1,5 @@
 # power-query-extentions
-Various M Queries that you can use to make life easy-peasy
+Power Query Functions  that you can use to make life easy-peasy
 
 
 # Getting Started  
