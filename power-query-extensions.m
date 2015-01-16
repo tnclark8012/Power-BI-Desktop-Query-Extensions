@@ -36,7 +36,8 @@ DatesBetween= (start as any, end as any) =>
         GetDates = (start as date, end as date, dates as list)=> if start > end then dates else @GetDates(Date.AddDays(start, 1), end, List.Combine({dates, {start}})),
         Dates = GetDates(adjustedStart, adjustedEnd, {})
       in Dates,
-DayOfWeek = (dayOfWeekNum as number) => Switch(dayOfWeekNum, {1, 2, 3, 4, 5, 6, 7}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null),
+// Sunday is 0
+DayOfWeek = (dayOfWeekIndex as number) => Switch(dayOfWeekIndex, {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null),
 MonthName  = (monthNum as number) => Switch(monthNum, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
         {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
  // Utility
