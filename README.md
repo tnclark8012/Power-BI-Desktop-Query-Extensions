@@ -1,12 +1,14 @@
 # power-query-extentions
 Various M Queries that you can use to make life easy-peasy
 
-## Usage: 
 
-Create a new blank query
-Name it what you like (Example: Utils)
-Paste the m text into the query
+# Getting Started  
+## Create a blank query
+![New Blank Query](https://cloud.githubusercontent.com/assets/1501159/5770609/ce1c6c62-9ce1-11e4-92b4-fee8d60a6bb7.png)
 
-### Use it like this:
+## Name the query (We prefer PQ)
+## Paste in the extension
+![Create](https://cloud.githubusercontent.com/assets/1501159/5770648/52c12b38-9ce2-11e4-8a3e-63ac136a7c2c.png)
 
-= if Utils\[IsUpperCase\](*"A"*) then *"Awesome!"* else *"We've got a bug, not as awesome"*
+## Use it!   
+ **=Table.AddColumn( GeographyTable, "State is Capitalized", each PQ\[IsUpperCase\]( \[State Abbrev\] ) )**
