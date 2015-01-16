@@ -1,4 +1,4 @@
-=let 
+let 
 PQExtentions =
  [
  Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
