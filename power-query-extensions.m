@@ -41,7 +41,7 @@ DayOfWeek = (dayOfWeekIndex as number) => Switch(dayOfWeekIndex, {0, 1, 2, 3, 4,
 MonthName  = (monthNum as number) => Switch(monthNum, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
         {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
  // Utility
- Switch = (value as any, cases as list, results as list, default as any) => if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default),       
+ Switch = (value as any, cases as list, results as list, default as any) => if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
 
  ]
 in PQExtentions
