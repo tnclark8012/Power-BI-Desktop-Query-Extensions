@@ -46,7 +46,7 @@ Date.MonthName  = (date as any) =>
 // Text                //
 /////////////////////////
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-
+Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
 // Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
 
@@ -66,7 +66,13 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
 		 then 
 			" " else "" ) & 
 		current),
-
+Text.Substring = (text as text, start as number, optional count as number) => 
+	let 
+		start = if start >= 0 then start else error "start index should be >= 0",
+		end = if count <= Text.Length(text) then count else error "count should be <= text length",
+		textList = Text.ToList(text),
+		substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
+	in substr,
 
 ///////////////////////// 
 // Table               //
