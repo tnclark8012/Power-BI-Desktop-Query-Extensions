@@ -6,8 +6,10 @@ PQX =[
 // Date                //
 /////////////////////////
 // Basic calendar
-Date.Calendar = (start as any, end as any) => 
+Date.Calendar = (optional start as any, optional end as any) => 
 	let
+		StartDate = Date.From(start),
+		EndDate = Date.From(end),
     		Source = pqx[Date.DatesBetween](StartDate, EndDate),
     		FromList = Table.FromList(Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
     		Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
