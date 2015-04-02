@@ -1,5 +1,5 @@
 let 
-Test = PQX[Text.RemoveExtraWhitespace]("Hello   there @ sdf"),
+Test = PQX[Date.MonthName](1),
 PQX =[
 
 ///////////////////////// 
@@ -30,9 +30,15 @@ Date.DatesBetween= (start as any, end as any) =>
 
 // Sunday is 0
 Date.DayName = (date as any) => Switch(Date.DayOfWeek(DateTime.From(date)), {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null),
-
-Date.MonthName  = (date as any) => Switch(Date.Month(DateTime.From(date)), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
-        {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
+Date.MonthName  = (date as any) => 
+	let 
+		monthNumber = if date is number then date else Date.Month(DateTime.From(date))
+	in 
+		Switch(
+			monthNumber,
+			{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
+		        {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
+	
  
 
 
@@ -69,7 +75,7 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
 
 // Splits camelCased and PascalCased text in a column. 
- Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
+Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 
 
 ///////////////////////// 
