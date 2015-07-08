@@ -1,5 +1,7 @@
 let 
+
 Test = PQX[Date.MonthName](1),
+
 PQX =[
 
 ///////////////////////// 
@@ -79,6 +81,32 @@ Text.Substring = (text as text, start as number, optional count as number) =>
 ///////////////////////// 
 // Table               //
 /////////////////////////
+
+// Perform a cross join of lists. Example usage:
+// Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
+// Will give me a new table with two columns, "Color" and "Number" which contains one row for each possible
+// combination of colors and numbers
+// Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) = Table.FromRecords({[Color="Red", Number=1],[Color="Red", Number = 2],[Color="Red", Number = 3],[Color="Blue", Number=1],[Color="Blue", Number=2],[Color="Blue", Number=3]})
+Table.FromListCrossJoin = (listColumnNamePairs as any) =>
+	   let 
+	    input = {{Players[player], "player"}, {Play[pid], "pid"}},
+	    remainingPairs = List.Skip(input, 1),
+	    current = List.First(input),
+	    theList = List.First(current),
+	    columnName = List.First(List.Skip(current),1),
+	    firstTable = Table.FromList(theList, null, {columnName}),
+	    doStuff = (table as table, remainingPairs as list) =>
+	       if List.Count(remainingPairs) <= 0 then table else
+	       let 
+	          current = List.First(remainingPairs),
+	          theList = List.First(current),
+	          columnName = List.First(List.Skip(current), 1),
+	          nextTable = Table.ExpandListColumn(Table.AddColumn(table, columnName, each theList), columnName)
+	       in @doStuff(nextTable, List.Skip(remainingPairs, 1)),
+	    Result = doStuff(firstTable, remainingPairs)
+	in
+	    Result,
+
 // Splits camelCased and PascalCased column names. 
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
 
