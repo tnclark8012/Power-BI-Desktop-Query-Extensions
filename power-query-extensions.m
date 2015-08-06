@@ -82,6 +82,38 @@ Text.Substring = (text as text, start as number, optional count as number) =>
 // Table               //
 /////////////////////////
 
+// Transforms a column's value into its nested value -- if it eventually finds only one. Consider the following column:
+//  MyCol
+//  -----
+//  "a"
+//  {{{"b"}}}
+//  Table.FromRecords({[MyCol=Table.FromRecords({[col=2]})})
+//  {}
+//
+// Table.DrillColumn(table, "MyCol") will convert it to
+//
+//  MyCol
+//  -----
+//  "a"
+//  "b"
+//  2
+//  null
+Table.DrillIntoColumn = (table as table, columnName as text) =>
+		let
+			 FindValue = (value as any) => 
+				if value is list then
+					if List.Count(value) = 1 then @FindValue(List.First(value)) 
+					else if List.Count(value) = 0 then null
+					else error "Couldn't find single value"
+				else if value is table then
+					if Table.RowCount(value) = 1 then @FindValue(List.First(Table.ToColumns(value)))
+                                        else if Table.RowCount(value) = 0 then null 
+					else error "Couldn't find single value"
+				else  value,
+			 Result = Table.TransformColumns(table, {{columnName, FindValue}})
+		in
+			Result,
+
 // Perform a cross join of lists. Example usage:
 // Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
 // Will give me a new table with two columns, "Color" and "Number" which contains one row for each possible
