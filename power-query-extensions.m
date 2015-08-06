@@ -1,26 +1,22 @@
-let 
-
-Test = PQX[Date.MonthName](1),
-
-PQX =[
+= [
 
 ///////////////////////// 
 // Date                //
 /////////////////////////
 // Basic calendar
 Date.Calendar = (optional start as any, optional end as any) => 
-	let
-		StartDate = Date.From(start),
-		EndDate = Date.From(end),
-    		Source = pqx[Date.DatesBetween](StartDate, EndDate),
-    		FromList = Table.FromList(Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-    		Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
-    		DayOfWeek = Table.AddColumn(Date, "Day of Week", each pqx[Date.DayName]([Date])),
-    		Month = Table.AddColumn(DayOfWeek, "Month", each pqx[Date.MonthName]([Date])),
-    		WeekStartDate = Table.AddColumn(Month, "WeekStartDate", each Date.StartOfWeek([Date])),
-    		WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate])))
-	in
-    		WeekStart,
+   let
+      StartDate = Date.From(start),
+      EndDate = Date.From(end),
+         Source = pqx[Date.DatesBetween](StartDate, EndDate),
+         FromList = Table.FromList(Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+         Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
+         DayOfWeek = Table.AddColumn(Date, "Day of Week", each pqx[Date.DayName]([Date])),
+         Month = Table.AddColumn(DayOfWeek, "Month", each pqx[Date.MonthName]([Date])),
+         WeekStartDate = Table.AddColumn(Month, "WeekStartDate", each Date.StartOfWeek([Date])),
+         WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate])))
+   in
+         WeekStart,
 // Dates between. Start and end can be flipped
 Date.DatesBetween= (start as any, end as any) => 
       let 
@@ -35,14 +31,14 @@ Date.DatesBetween= (start as any, end as any) =>
 // Sunday is 0
 Date.DayName = (date as any) => Switch(Date.DayOfWeek(DateTime.From(date)), {0, 1, 2, 3, 4, 5, 6}, {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, null),
 Date.MonthName  = (date as any) => 
-	let 
-		monthNumber = if date is number then date else Date.Month(DateTime.From(date))
-	in 
-		Switch(
-			monthNumber,
-			{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
-		        {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
-	
+   let 
+      monthNumber = if date is number then date else Date.Month(DateTime.From(date))
+   in 
+      Switch(
+         monthNumber,
+         {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
+              {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
+   
  
 
 
@@ -57,26 +53,26 @@ Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(tex
 Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "), 
 // Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) => 
-	let
-		PreviousLetter = Text.End(state, 1),
-		Ignore = (text as text) => text = " " or text = "."
-	in 
-		state & 
-		(if 
-			not Text.IsUpperCase(PreviousLetter) and 
-		 	not Ignore(PreviousLetter) and 
-		 	not Ignore(current) and 
-		 	Text.IsUpperCase(current) 
-		 then 
-			" " else "" ) & 
-		current),
+   let
+      PreviousLetter = Text.End(state, 1),
+      Ignore = (text as text) => text = " " or text = "."
+   in 
+      state & 
+      (if 
+         not Text.IsUpperCase(PreviousLetter) and 
+         not Ignore(PreviousLetter) and 
+         not Ignore(current) and 
+         Text.IsUpperCase(current) 
+       then 
+         " " else "" ) & 
+      current),
 Text.Substring = (text as text, start as number, optional count as number) => 
-	let 
-		start = if start >= 0 then start else error "start index should be >= 0",
-		end = if count <= Text.Length(text) then count else error "count should be <= text length",
-		textList = Text.ToList(text),
-		substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
-	in substr,
+   let 
+      start = if start >= 0 then start else error "start index should be >= 0",
+      end = if count <= Text.Length(text) then count else error "count should be <= text length",
+      textList = Text.ToList(text),
+      substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
+   in substr,
 
 ///////////////////////// 
 // Table               //
@@ -99,20 +95,20 @@ Text.Substring = (text as text, start as number, optional count as number) =>
 //  2
 //  null
 Table.DrillIntoColumn = (table as table, columnName as text) =>
-		let
-			 FindValue = (value as any) => 
-				if value is list then
-					if List.Count(value) = 1 then @FindValue(List.First(value)) 
-					else if List.Count(value) = 0 then null
-					else error "Couldn't find single value"
-				else if value is table then
-					if Table.RowCount(value) = 1 then @FindValue(List.First(Table.ToColumns(value)))
+      let
+          FindValue = (value as any) => 
+            if value is list then
+               if List.Count(value) = 1 then @FindValue(List.First(value)) 
+               else if List.Count(value) = 0 then null
+               else error "Couldn't find single value"
+            else if value is table then
+               if Table.RowCount(value) = 1 then @FindValue(List.First(Table.ToColumns(value)))
                                         else if Table.RowCount(value) = 0 then null 
-					else error "Couldn't find single value"
-				else  value,
-			 Result = Table.TransformColumns(table, {{columnName, FindValue}})
-		in
-			Result,
+               else error "Couldn't find single value"
+            else  value,
+          Result = Table.TransformColumns(table, {{columnName, FindValue}})
+      in
+         Result,
 
 // Perform a cross join of lists. Example usage:
 // Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
@@ -120,24 +116,23 @@ Table.DrillIntoColumn = (table as table, columnName as text) =>
 // combination of colors and numbers
 // Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) = Table.FromRecords({[Color="Red", Number=1],[Color="Red", Number = 2],[Color="Red", Number = 3],[Color="Blue", Number=1],[Color="Blue", Number=2],[Color="Blue", Number=3]})
 Table.FromListCrossJoin = (listColumnNamePairs as any) =>
-	   let 
-	    input = {{Players[player], "player"}, {Play[pid], "pid"}},
-	    remainingPairs = List.Skip(input, 1),
-	    current = List.First(input),
-	    theList = List.First(current),
-	    columnName = List.First(List.Skip(current),1),
-	    firstTable = Table.FromList(theList, null, {columnName}),
-	    doStuff = (table as table, remainingPairs as list) =>
-	       if List.Count(remainingPairs) <= 0 then table else
-	       let 
-	          current = List.First(remainingPairs),
-	          theList = List.First(current),
-	          columnName = List.First(List.Skip(current), 1),
-	          nextTable = Table.ExpandListColumn(Table.AddColumn(table, columnName, each theList), columnName)
-	       in @doStuff(nextTable, List.Skip(remainingPairs, 1)),
-	    Result = doStuff(firstTable, remainingPairs)
-	in
-	    Result,
+      let 
+       remainingPairs = List.Skip(listColumnNamePairs, 1),
+       current = List.First(listColumnNamePairs),
+       theList = List.First(current),
+       columnName = List.First(List.Skip(current),1),
+       firstTable = Table.FromList(theList, null, {columnName}),
+       doStuff = (table as table, remainingPairs as list) =>
+          if List.Count(remainingPairs) <= 0 then table else
+          let 
+             current = List.First(remainingPairs),
+             theList = List.First(current),
+             columnName = List.First(List.Skip(current), 1),
+             nextTable = Table.ExpandListColumn(Table.AddColumn(table, columnName, each theList), columnName)
+          in @doStuff(nextTable, List.Skip(remainingPairs, 1)),
+       Result = doStuff(firstTable, remainingPairs)
+   in
+       Result,
 
 // Splits camelCased and PascalCased column names. 
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
@@ -154,5 +149,3 @@ Switch = (value as any, cases as list, results as list, default as any) => if Li
 
 
 ]
-in
-    PQX
