@@ -1,4 +1,5 @@
-= [
+let
+    Source = [
 
 ///////////////////////// 
 // Date                //
@@ -8,11 +9,11 @@ Date.Calendar = (optional start as any, optional end as any) =>
    let
       StartDate = Date.From(start),
       EndDate = Date.From(end),
-         Source = pqx[Date.DatesBetween](StartDate, EndDate),
+         Source = Date.DatesBetween(StartDate, EndDate),
          FromList = Table.FromList(Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
          Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
-         DayOfWeek = Table.AddColumn(Date, "Day of Week", each pqx[Date.DayName]([Date])),
-         Month = Table.AddColumn(DayOfWeek, "Month", each pqx[Date.MonthName]([Date])),
+         DayOfWeek = Table.AddColumn(Date, "Day of Week", each Date.DayName([Date])),
+         Month = Table.AddColumn(DayOfWeek, "Month", each Date.MonthName([Date])),
          WeekStartDate = Table.AddColumn(Month, "WeekStartDate", each Date.StartOfWeek([Date])),
          WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate])))
    in
@@ -149,3 +150,5 @@ Switch = (value as any, cases as list, results as list, default as any) => if Li
 
 
 ]
+in
+    Source
