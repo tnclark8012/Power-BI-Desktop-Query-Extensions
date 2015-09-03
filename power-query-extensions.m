@@ -1,5 +1,4 @@
-let
-    Source = [
+= [
 
 ///////////////////////// 
 // Date                //
@@ -41,7 +40,43 @@ Date.MonthName  = (date as any) =>
               {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
    
  
-
+/////////////////////////
+// Splitters           //
+/////////////////////////
+Splitter.SplitTextByNonAlpha = (line as text) => 
+	List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+		let
+			doSkip = not Text.Contains(Text.Alphabet, current),
+			lastItem = List.Last(state),
+			appendLast = lastItem<>null
+		in
+			if doSkip then 
+				if lastItem is null then 
+					state 
+				else 
+					List.Combine({state, {null}})
+			else
+				if appendLast then
+					List.Combine({List.RemoveLastN(state, 1), {lastItem&current}})
+				else 	
+					List.Combine({List.RemoveLastN(state, 1), {current}})),
+Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as text)=>
+	List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+		let
+			doSkip = not Text.Contains(safeCharacters, current),
+			lastItem = List.Last(state),
+			appendLast = lastItem<>null
+		in
+			if doSkip then 
+				if lastItem is null then 
+					state 
+				else 
+					List.Combine({state, {null}})
+			else
+				if appendLast then
+					List.Combine({List.RemoveLastN(state, 1), {lastItem&current}})
+				else 	
+					List.Combine({List.RemoveLastN(state, 1), {current}})),
 
 ///////////////////////// 
 // Text                //
@@ -50,7 +85,7 @@ Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
 // Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
-
+Text.IsAlpha = (text as text) => List.MatchesAll(Text.ToList(text), each Text.Contains(Text.Alphabet, _)),
 Text.RemoveExtraWhitespace = (text as text) => Text.Combine(Splitter.SplitTextByWhitespace()(text)," "), 
 // Splits camelCased and PascalCased text and separates by a space. Ex: "thisIsAColumn" -> "this Is A Column"
 Text.SplitCamelCase = (text as nullable text) => if text is null then null else List.Accumulate(Text.ToList(text),"", (state, current) => 
@@ -67,6 +102,26 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
        then 
          " " else "" ) & 
       current),
+
+Text.SplitOnNonAlpha = (line as text) =>
+	List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+		let
+			doSkip = not Text.Contains(Text.Alphabet, current),
+			lastItem = List.Last(state),
+			appendLast = lastItem<>null
+		in
+			if doSkip then 
+				if lastItem is null then 
+					state 
+				else 
+					List.Combine({state, {null}})
+			else
+				if appendLast then
+					List.Combine({List.RemoveLastN(state, 1), {lastItem&current}})
+				else 	
+					List.Combine({List.RemoveLastN(state, 1), {current}})),
+
+
 Text.Substring = (text as text, start as number, optional count as number) => 
    let 
       start = if start >= 0 then start else error "start index should be >= 0",
@@ -135,6 +190,9 @@ Table.FromListCrossJoin = (listColumnNamePairs as any) =>
    in
        Result,
 
+// Replaces a value if it matches a predicate
+Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
+
 // Splits camelCased and PascalCased column names. 
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
 
@@ -145,10 +203,6 @@ Table.SplitColumnText = (table as table, columns as list) => if List.Count(colum
 ///////////////////////// 
 // Misc.               //
 /////////////////////////
-Switch = (value as any, cases as list, results as list, default as any) => if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
-
-
+Switch = (value as any, cases as list, results as list, optional default as any) => if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
 
 ]
-in
-    Source
