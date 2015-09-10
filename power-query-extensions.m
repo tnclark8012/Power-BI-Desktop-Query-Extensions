@@ -1,4 +1,4 @@
-= [
+[
 
 ///////////////////////// 
 // Date                //
@@ -165,6 +165,15 @@ Table.DrillIntoColumn = (table as table, columnName as text) =>
           Result = Table.TransformColumns(table, {{columnName, FindValue}})
       in
          Result,
+
+// if fieldNames aren't specified, use the field names from the first row of the column.
+Table.ExpandRecordColumn = (table as table, columnName as text, optional fieldNames as list, optional newColumnNames as nullable list) => 
+	let
+		_fieldNames = if fieldNames <> null then fieldNames else List.Buffer(Record.FieldNames(List.First(Table.Column(table, columnName)))),
+		_newColumnNames = if newColumnNames <> null then newColumnNames else _fieldNames,
+		Result = Table.ExpandRecordColumn(table, columnName, _fieldNames , _newColumnNames)
+	in 
+		Result,
 
 // Perform a cross join of lists. Example usage:
 // Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
