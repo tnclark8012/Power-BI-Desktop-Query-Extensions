@@ -15,4 +15,4 @@ PBI Desktop (and Excel 2016) Query Functions that you can use to make life easy-
 To call a function, you'll use the following syntax: pqx[theFunction.Name]
 Here's an example: 
 
-pqx[Table.SplitColumnNames](Query1)
+pqx\[Table.SplitColumnNames\](Query1)
