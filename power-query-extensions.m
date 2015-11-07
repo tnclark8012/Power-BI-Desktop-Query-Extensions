@@ -133,7 +133,7 @@ Text.Substring = (text as text, start as number, optional count as number) =>
 ///////////////////////// 
 // Table               //
 /////////////////////////
-
+Table.AddBlankRow = (table as table) => Table.Combine({table, Table.FromRecords({[]})}),
 // Transforms a column's value into its nested value -- if it eventually finds only one. Consider the following column:
 //  MyCol
 //  -----
