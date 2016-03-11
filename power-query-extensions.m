@@ -39,6 +39,17 @@ Date.MonthName  = (date as any) =>
          {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 
               {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}, null),
    
+/////////////////////////
+// List                //
+/////////////////////////
+List.Flatten = (list as list) => 
+    // PQX[List.Flatten]({1, 2,Table.FromRecords({[x=1]}),  {3,4,5}}) = {1,2,Table.FromRecords({[x=1]}),3,4,5}
+    List.Accumulate(list, {}, (state, current) =>
+        let
+            currentListContent = if current is list then @List.Flatten(current) else {current}
+        in
+            List.Combine({state, currentListContent})
+    ),
  
 /////////////////////////
 // Splitters           //
@@ -57,7 +68,7 @@ Splitter.SplitTextByNonAlpha = (line as text) =>
 					List.Combine({state, {null}})
 			else
 				if appendLast then
-					List.Combine({List.RemoveLastN(state, 1), {lastItem&current}})
+					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
 				else 	
 					List.Combine({List.RemoveLastN(state, 1), {current}})),
 Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as text)=>
@@ -74,7 +85,7 @@ Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as text)=>
 					List.Combine({state, {null}})
 			else
 				if appendLast then
-					List.Combine({List.RemoveLastN(state, 1), {lastItem&current}})
+					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
 				else 	
 					List.Combine({List.RemoveLastN(state, 1), {current}})),
 
@@ -117,7 +128,7 @@ Text.SplitOnNonAlpha = (line as text) =>
 					List.Combine({state, {null}})
 			else
 				if appendLast then
-					List.Combine({List.RemoveLastN(state, 1), {lastItem&current}})
+					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
 				else 	
 					List.Combine({List.RemoveLastN(state, 1), {current}})),
 
@@ -179,7 +190,8 @@ Table.ExpandRecordColumn = (table as table, columnName as text, optional fieldNa
 // Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
 // Will give me a new table with two columns, "Color" and "Number" which contains one row for each possible
 // combination of colors and numbers
-// Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) = Table.FromRecords({[Color="Red", Number=1],[Color="Red", Number = 2],[Color="Red", Number = 3],[Color="Blue", Number=1],[Color="Blue", Number=2],[Color="Blue", Number=3]})
+// Table.FromListCrossJoin({{"Red", "Blue"}, "Color"}, {{1,2,3}, "Number"}}) = 
+//    Table.FromRecords({[Color="Red", Number=1],[Color="Red", Number = 2],[Color="Red", Number = 3],[Color="Blue", Number=1],[Color="Blue", Number=2],[Color="Blue", Number=3]})
 Table.FromListCrossJoin = (listColumnNamePairs as any) =>
       let 
        remainingPairs = List.Skip(listColumnNamePairs, 1),
@@ -200,7 +212,8 @@ Table.FromListCrossJoin = (listColumnNamePairs as any) =>
        Result,
 
 // Replaces a value if it matches a predicate
-Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
+Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => 
+    Table.ReplaceValue(table, null,after, (text, old, new)=>if replaceIf(text) then new else text, if columnNameOrList is list then columnNameOrList else {columnNameOrList}),
 
 // Splits camelCased and PascalCased column names. 
 Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Transform(Table.ColumnNames(table), each {_, Text.SplitCamelCase(_)})), 
@@ -212,6 +225,7 @@ Table.SplitColumnText = (table as table, columns as list) => if List.Count(colum
 ///////////////////////// 
 // Misc.               //
 /////////////////////////
-Switch = (value as any, cases as list, results as list, optional default as any) => if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
+Switch = (value as any, cases as list, results as list, optional default as any) => 
+    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
 
 ]
