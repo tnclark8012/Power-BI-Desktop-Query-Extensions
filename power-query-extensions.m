@@ -163,7 +163,13 @@ Text.PositionAfter = (text as nullable text, substring as text) =>
         indexAfter = if firstIndex >=0 then firstIndex + Text.Length(substring) else -1
     in
         if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1,
-        
+Text.Until = (text as text, endDelimiter as text, optional startIndex as number) => 
+    let
+        start = if startIndex is null then 0 else startIndex,
+        textFromStart = Text.Substring(text, start),
+        delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
+    in
+        Text.Range(textFromStart, 0, delimPosition),
 ///////////////////////// 
 // Table               //
 /////////////////////////
