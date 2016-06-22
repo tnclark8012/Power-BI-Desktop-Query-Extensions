@@ -1,4 +1,4 @@
-# power-query-extentions
+# Extension Functions for Power BI Desktop and Excel
 PBI Desktop (and Excel 2016) Query Functions that you can use to make life easy-peasy
 
 
