@@ -14,10 +14,14 @@ Date.Calendar = (optional start as any, optional end as any) =>
          Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
          DayOfWeek = Table.AddColumn(Date, "Day of Week", each Date.DayName([Date])),
          Month = Table.AddColumn(DayOfWeek, "Month", each Date.MonthName([Date])),
-         WeekStartDate = Table.AddColumn(Month, "WeekStartDate", each Date.StartOfWeek([Date])),
-         WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate])))
+	 MonthNum = Table.AddColumn(Month, "MonthNumber", each Date.Month([Date])),
+         WeekStartDate = Table.AddColumn(MonthNum, "WeekStartDate", each Date.StartOfWeek([Date])),
+         WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate]))),
+         Year = Table.AddColumn(WeekStart, "Year", each Date.Year([Date])),
+	 YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
+         Result = YearMonth
    in
-         WeekStart,
+         Result,
 // Dates between. Start and end can be flipped
 Date.DatesBetween= (start as any, end as any) => 
       let 
