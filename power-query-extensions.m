@@ -1,4 +1,5 @@
-[
+let
+    Source = [
 
 ///////////////////////// 
 // Date                //
@@ -50,7 +51,17 @@ List.Flatten = (list as list) =>
         in
             List.Combine({state, currentListContent})
     ),
- 
+/////////////////////////
+// Number              //
+/////////////////////////
+Number.Digits = {0,1,2,3,4,5,6,7,8,9},
+Number.ParseText = (text as text, optional startIndex as number, optional allowCharacters as list) => 
+    let
+        consider = if startIndex is null then text else Text.Range(text,startIndex), 
+        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not pqx[Text.IsNumber](_)), each pqx[Text.IsNumber](_) or List.Contains(allowCharacters, _))
+    in 
+        Text.FromList(numberSeries),
+
 /////////////////////////
 // Splitters           //
 /////////////////////////
@@ -141,6 +152,14 @@ Text.Substring = (text as text, start as number, optional count as number) =>
       substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
    in substr,
 
+Text.IsNumber = (text as text) => try Number.FromText(text) is number otherwise false,
+Text.PositionAfter = (text as nullable text, substring as text) => 
+    let 
+        firstIndex = Text.PositionOf(text, substring),
+        indexAfter = if firstIndex >=0 then firstIndex + Text.Length(substring) else -1
+    in
+        if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1,
+        
 ///////////////////////// 
 // Table               //
 /////////////////////////
@@ -221,7 +240,9 @@ Table.SplitColumnNames = (table as table) => Table.RenameColumns(table, List.Tra
 // Splits camelCased and PascalCased text in a column. 
 Table.SplitColumnText = (table as table, columns as list) => if List.Count(columns) = 0 then table else Table.TransformColumns(@Table.SplitColumnText(table, List.Skip(columns, 1)), {{List.First(columns), Text.SplitCamelCase}}),
 
-
+Table.TransformColumn = (table as table, column as text, transform as function) => Table.TransformColumns(table, {{column, transform}}),
+Table.RenameColumn = (table as table, column as text, newName as text) => Table.RenameColumns(table, {{column, newName}}),
+Table.RenameAndTransformColumn = (table, currentName as text, newName as text, transform as function) => Table.TransformColumn(Table.RenameColumns(table, {currentName, newName}), newName, transform),
 ///////////////////////// 
 // Misc.               //
 /////////////////////////
@@ -229,3 +250,5 @@ Switch = (value as any, cases as list, results as list, optional default as any)
     if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
 
 ]
+in
+    Source
