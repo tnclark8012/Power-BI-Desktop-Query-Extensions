@@ -8,11 +8,27 @@ Tests = {
                 {"NewName", "NumberCol"}, 
                 Table.ColumnNames(library[Table.RenameColumn](TestUtils[SimpleTable], "TextCol", "NewName")),
                 "Column should have new name")
+    ],
+    [
+        CaseName = "Text.Until",
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                "abc ", 
+                library[Text.Until]("abc 123", "1"),
+                "Proper substring should be found")
+    ],
+    [
+        CaseName = "Text.Substring - infer end",
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                "BI Rules!", 
+                library[Text.Substring]("Power BI Rules!", 6),
+                "Text.Substring('Power BI Rules', 6)")
     ]
 },
 
 TestUtils = [ 
-    AssertEqual = (expected as any, actual as any, description as text) => if expected = actual then true else error "AssertEqual failed: " & description,
+    AssertEqual = (expected as any, actual as any, description as text) => if expected = actual then true else error "Expected: " & Text.From(expected) & "; Actual: " & Text.From(actual) & "; Reason: " & description,
     SimpleTable = Table.FromRecords({[TextCol = "A", NumberCol = "1"], [TextCol = "B", NumberCol = 2], [TextCol = "C", NumberCol = 3]})
 ],
 
@@ -43,11 +59,11 @@ Date.Calendar = (optional start as any, optional end as any) =>
          Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
          DayOfWeek = Table.AddColumn(Date, "Day of Week", each Date.DayName([Date])),
          Month = Table.AddColumn(DayOfWeek, "Month", each Date.MonthName([Date])),
-	 MonthNum = Table.AddColumn(Month, "MonthNumber", each Date.Month([Date])),
+   MonthNum = Table.AddColumn(Month, "MonthNumber", each Date.Month([Date])),
          WeekStartDate = Table.AddColumn(MonthNum, "WeekStartDate", each Date.StartOfWeek([Date])),
          WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate]))),
          Year = Table.AddColumn(WeekStart, "Year", each Date.Year([Date])),
-	 YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
+   YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
          Result = YearMonth
    in
          Result,
@@ -84,6 +100,13 @@ List.Flatten = (list as list) =>
         in
             List.Combine({state, currentListContent})
     ),
+List.From = (simpleTextList as text) =>
+    let
+        trimWhitespace = Text.Trim(simpleTextList),
+        listToSplit = Text.TrimEnd(Text.TrimStart(trimWhitespace, "{"), "}"),
+        Result = Text.Split(listToSplit, ",")
+    in
+        Result,
 /////////////////////////
 // Number              //
 /////////////////////////
@@ -99,39 +122,39 @@ Number.ParseText = (text as text, optional startIndex as number, optional allowC
 // Splitters           //
 /////////////////////////
 Splitter.SplitTextByNonAlpha = (line as text) => 
-	List.Accumulate(Text.ToList(line), {null} , (state, current) => 
-		let
-			doSkip = not Text.Contains(Text.Alphabet, current),
-			lastItem = List.Last(state),
-			appendLast = lastItem<>null
-		in
-			if doSkip then 
-				if lastItem is null then 
-					state 
-				else 
-					List.Combine({state, {null}})
-			else
-				if appendLast then
-					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-				else 	
-					List.Combine({List.RemoveLastN(state, 1), {current}})),
+  List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+    let
+      doSkip = not Text.Contains(Text.Alphabet, current),
+      lastItem = List.Last(state),
+      appendLast = lastItem<>null
+    in
+      if doSkip then 
+        if lastItem is null then 
+          state 
+        else 
+          List.Combine({state, {null}})
+      else
+        if appendLast then
+          List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
+        else  
+          List.Combine({List.RemoveLastN(state, 1), {current}})),
 Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as text)=>
-	List.Accumulate(Text.ToList(line), {null} , (state, current) => 
-		let
-			doSkip = not Text.Contains(safeCharacters, current),
-			lastItem = List.Last(state),
-			appendLast = lastItem<>null
-		in
-			if doSkip then 
-				if lastItem is null then 
-					state 
-				else 
-					List.Combine({state, {null}})
-			else
-				if appendLast then
-					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-				else 	
-					List.Combine({List.RemoveLastN(state, 1), {current}})),
+  List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+    let
+      doSkip = not Text.Contains(safeCharacters, current),
+      lastItem = List.Last(state),
+      appendLast = lastItem<>null
+    in
+      if doSkip then 
+        if lastItem is null then 
+          state 
+        else 
+          List.Combine({state, {null}})
+      else
+        if appendLast then
+          List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
+        else  
+          List.Combine({List.RemoveLastN(state, 1), {current}})),
 
 ///////////////////////// 
 // Text                //
@@ -158,29 +181,29 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
          " " else "" ) & 
       current),
 
-Text.SplitOnNonAlpha = (line as text) =>
-	List.Accumulate(Text.ToList(line), {null} , (state, current) => 
-		let
-			doSkip = not Text.Contains(Text.Alphabet, current),
-			lastItem = List.Last(state),
-			appendLast = lastItem<>null
-		in
-			if doSkip then 
-				if lastItem is null then 
-					state 
-				else 
-					List.Combine({state, {null}})
-			else
-				if appendLast then
-					List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-				else 	
-					List.Combine({List.RemoveLastN(state, 1), {current}})),
+Text.SplitOnNonAlpha = (line as nullable text) =>
+  if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) => 
+    let
+      doSkip = not Text.Contains(Text.Alphabet, current),
+      lastItem = List.Last(state),
+      appendLast = lastItem<>null
+    in
+      if doSkip then 
+        if lastItem is null then 
+          state 
+        else 
+          List.Combine({state, {null}})
+      else
+        if appendLast then
+          List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
+        else  
+          List.Combine({List.RemoveLastN(state, 1), {current}})),
 
 
 Text.Substring = (text as text, start as number, optional count as number) => 
    let 
       start = if start >= 0 then start else error "start index should be >= 0",
-      end = if count <= Text.Length(text) then count else error "count should be <= text length",
+      end = if count = null then Text.Length(text) else if count <= Text.Length(text) then count else error "count should be <= text length",
       textList = Text.ToList(text),
       substr = Text.FromList(List.FirstN(List.Skip(textList, start), end - start))
    in substr,
@@ -194,7 +217,7 @@ Text.PositionAfter = (text as nullable text, substring as text) =>
         if text is null then -1 else if indexAfter >= 0 and indexAfter < Text.Length(text) then indexAfter else -1,
 Text.Until = (text as text, endDelimiter as text, optional startIndex as number) => 
     let
-        start = if startIndex is null then 0 else startIndex,
+        start = if startIndex = null then 0 else startIndex,
         textFromStart = Text.Substring(text, start),
         delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
     in
@@ -237,12 +260,12 @@ Table.DrillIntoColumn = (table as table, columnName as text) =>
 
 // if fieldNames aren't specified, use the field names from the first row of the column.
 Table.ExpandRecordColumn = (table as table, columnName as text, optional fieldNames as list, optional newColumnNames as nullable list) => 
-	let
-		_fieldNames = if fieldNames <> null then fieldNames else List.Buffer(Record.FieldNames(List.First(Table.Column(table, columnName)))),
-		_newColumnNames = if newColumnNames <> null then newColumnNames else _fieldNames,
-		Result = Table.ExpandRecordColumn(table, columnName, _fieldNames , _newColumnNames)
-	in 
-		Result,
+  let
+    _fieldNames = if fieldNames <> null then fieldNames else List.Buffer(Record.FieldNames(List.First(Table.Column(table, columnName)))),
+    _newColumnNames = if newColumnNames <> null then newColumnNames else _fieldNames,
+    Result = Table.ExpandRecordColumn(table, columnName, _fieldNames , _newColumnNames)
+  in 
+    Result,
 
 // Perform a cross join of lists. Example usage:
 // Table.FromListCrossJoin({ {ColorsTable[ColorName], "Color"}, {NumbersTable[Number], "Number"}})
