@@ -1,5 +1,34 @@
 let
-    Source = [
+
+Tests = {
+    [ 
+        CaseName = "Table.RenameColumn", 
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                {"NewName", "NumberCol"}, 
+                Table.ColumnNames(library[Table.RenameColumn](TestUtils[SimpleTable], "TextCol", "NewName")),
+                "Column should have new name")
+    ]
+},
+
+TestUtils = [ 
+    AssertEqual = (expected as any, actual as any, description as text) => if expected = actual then true else error "AssertEqual failed: " & description,
+    SimpleTable = Table.FromRecords({[TextCol = "A", NumberCol = "1"], [TextCol = "B", NumberCol = 2], [TextCol = "C", NumberCol = 3]})
+],
+
+TestResults = 
+    let 
+        failedTests = List.Select(
+            List.Transform(Tests, (suite as record) => 
+                let 
+                    testResult = try suite[Test](_extensionLibrary)
+                in
+                    if testResult[HasError] then Error.Record(suite[CaseName], testResult[Error][Message], null) else true), 
+            each _ <> true) 
+    in 
+        if List.IsEmpty(failedTests) then "All " & Text.From(List.Count(Tests)) & " tests passed! :)" else failedTests,
+
+_extensionLibrary = [
 
 ///////////////////////// 
 // Date                //
@@ -62,7 +91,7 @@ Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = (text as text, optional startIndex as number, optional allowCharacters as list) => 
     let
         consider = if startIndex is null then text else Text.Range(text,startIndex), 
-        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not pqx[Text.IsNumber](_)), each pqx[Text.IsNumber](_) or List.Contains(allowCharacters, _))
+        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(allowCharacters, _))
     in 
         Text.FromList(numberSeries),
 
@@ -257,8 +286,9 @@ Table.RenameAndTransformColumn = (table, currentName as text, newName as text, t
 // Misc.               //
 /////////////////////////
 Switch = (value as any, cases as list, results as list, optional default as any) => 
-    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)    
+    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
+],
 
-]
+Result = _extensionLibrary
 in
-    Source
+  Result
