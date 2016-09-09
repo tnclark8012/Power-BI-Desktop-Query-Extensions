@@ -114,9 +114,10 @@ Number.Digits = {0,1,2,3,4,5,6,7,8,9},
 Number.ParseText = (text as text, optional startIndex as number, optional allowCharacters as list) => 
     let
         consider = if startIndex is null then text else Text.Range(text,startIndex), 
-        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(allowCharacters, _))
+        _allowCharacters = if allowCharacters is null then {} else allowCharacters,
+        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
     in 
-        Text.FromList(numberSeries),
+        if text is null then null else Text.FromList(numberSeries),
 
 /////////////////////////
 // Splitters           //
@@ -221,7 +222,7 @@ Text.Until = (text as text, endDelimiter as text, optional startIndex as number)
         textFromStart = Text.Substring(text, start),
         delimPosition = if Text.PositionOf(textFromStart, endDelimiter) >= 0 then Text.PositionOf(textFromStart, endDelimiter) else Text.Length(textFromStart)
     in
-        Text.Range(textFromStart, 0, delimPosition),
+        if text is null then null else Text.Range(textFromStart, 0, delimPosition),
 ///////////////////////// 
 // Table               //
 /////////////////////////
