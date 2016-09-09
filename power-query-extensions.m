@@ -62,8 +62,17 @@ TestResults =
 
 _extensionLibrary = [
 
-Document = (name as text, description as text, value as any) => 
-    Value.ReplaceType(value, Value.Type(value) meta [Documentation.Name=name, Documentation.Description=description]),
+Document = (name as text, description as text, valueOrExample as any, optional valueIfExample as any) =>
+    let
+        value = if valueIfExample is null then valueOrExample else valueIfExample,
+        examples = if valueIfExample is null then {} else valueOrExample
+    in
+        Value.ReplaceType(value, Value.Type(value) meta [
+            Documentation.Name = name, 
+            Documentation.Description = description,  
+            // [Description = "", Code="", Result =""]
+            Documentation.Examples = examples
+        ]),
 ///////////////////////// 
 // Date                //
 /////////////////////////
@@ -77,11 +86,11 @@ Date.Calendar = (optional start as any, optional end as any) =>
          Date = Table.RenameColumns(FromList,{{"Column1", "Date"}}),
          DayOfWeek = Table.AddColumn(Date, "Day of Week", each Date.DayName([Date])),
          Month = Table.AddColumn(DayOfWeek, "Month", each Date.MonthName([Date])),
-   MonthNum = Table.AddColumn(Month, "MonthNumber", each Date.Month([Date])),
+         MonthNum = Table.AddColumn(Month, "MonthNumber", each Date.Month([Date])),
          WeekStartDate = Table.AddColumn(MonthNum, "WeekStartDate", each Date.StartOfWeek([Date])),
          WeekStart = Table.AddColumn(WeekStartDate, "Week Start", each [Month] & " " & Text.From(Date.Day([WeekStartDate]))),
          Year = Table.AddColumn(WeekStart, "Year", each Date.Year([Date])),
-   YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
+         YearMonth = Table.AddColumn(Year, "YearMonth", each Number.From(Text.From([Year]) & (if [MonthNumber] < 10 then "0" else "") & Text.From([MonthNumber]))),
          Result = YearMonth
    in
          Result,
@@ -315,13 +324,16 @@ Table.RenameAndTransformColumn = (table, currentName as text, newName as text, t
 ///////////////////////// 
 // Misc.               //
 /////////////////////////
-
-// Switch(1, {1, 2, 3}, {"A", "B", "C"}) = "A" 
-// Switch(1, {{1, "A"}, {2, "B"}, {3, "C"}}) = "A"
 Switch = 
     Document(
         "Switch", 
-        "Given a value, find it's paired item", 
+        "Given a value, find it's paired item <br>"&
+            "Switch(value as any, cases as list, results as list, optional default as any) <br>" &
+            "Switch(value as any, pairs as list, optional default as any)",
+        { 
+            [ Description = "Using separate lists", Code = "Switch(1, {1, 2, 3}, {""A"", ""B"", ""C""})", Result = "A"],
+            [ Description = "Using one paired list", Code = "Switch(1, {{1, ""A""}, {2, ""B""}, {3, ""C""}})", Result = "A"]
+        },
         (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
             let
                hasPairs = List.First(casesOrPairs) is list,
