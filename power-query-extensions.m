@@ -24,6 +24,22 @@ Tests = {
                 "BI Rules!", 
                 library[Text.Substring]("Power BI Rules!", 6),
                 "Text.Substring('Power BI Rules', 6)")
+    ],
+    [
+        CaseName = "Switch case pairs",
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                2, 
+                library[Switch]("B", {{"A", 1}, {"B", 2}, {"C", 3}}),
+                "B is second case")
+    ],
+    [
+        CaseName = "Switch separate case and result",
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                4, 
+                library[Switch]("TE", {"QB", "RB", "WR", "TE", "K", "D/ST"}, {1, 2, 3, 4, 5, 6}),
+                "TE is 4th case")
     ]
 },
 
@@ -122,24 +138,9 @@ Number.ParseText = (text as text, optional startIndex as number, optional allowC
 /////////////////////////
 // Splitters           //
 /////////////////////////
-Splitter.SplitTextByNonAlpha = (line as text) => 
-  List.Accumulate(Text.ToList(line), {null} , (state, current) => 
-    let
-      doSkip = not Text.Contains(Text.Alphabet, current),
-      lastItem = List.Last(state),
-      appendLast = lastItem<>null
-    in
-      if doSkip then 
-        if lastItem is null then 
-          state 
-        else 
-          List.Combine({state, {null}})
-      else
-        if appendLast then
-          List.Combine({List.RemoveLastN(state, 1), {lastItem & current}})
-        else  
-          List.Combine({List.RemoveLastN(state, 1), {current}})),
-Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as text)=>
+Splitter.SplitTextByNonAlpha = (line as text) => Splitter.SplitTextByNotIn(Text.Alphabet),
+Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as nullable text) =>
+  if line is null then {} else
   List.Accumulate(Text.ToList(line), {null} , (state, current) => 
     let
       doSkip = not Text.Contains(safeCharacters, current),
@@ -161,6 +162,7 @@ Splitter.SplitTextByNotIn = (safeCharacters as text) => (line as text)=>
 // Text                //
 /////////////////////////
 Text.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+Text.AlphaNumeric = Text.Alphabet & "0123456789",
 Text.FromList = (list as list) => List.Accumulate(list, "", (state, current) => state & Text.From(current)),
 // Is text all uppercase? returns false if any non-alpha characters are present
 Text.IsUpperCase = (text as text) => List.AllTrue(List.Transform(Text.ToList(text), (letter)=>Text.Contains(Text.Alphabet, letter) and letter = Text.Upper(letter))),
@@ -181,6 +183,8 @@ Text.SplitCamelCase = (text as nullable text) => if text is null then null else 
        then 
          " " else "" ) & 
       current),
+
+Text.SplitOnNotIn = (line as nullable text, validCharacters as text) => Splitter.SplitTextByNotIn(validCharacters)(line),
 
 Text.SplitOnNonAlpha = (line as nullable text) =>
   if line is null then null else List.Accumulate(Text.ToList(line), {null} , (state, current) => 
@@ -309,8 +313,26 @@ Table.RenameAndTransformColumn = (table, currentName as text, newName as text, t
 ///////////////////////// 
 // Misc.               //
 /////////////////////////
-Switch = (value as any, cases as list, results as list, optional default as any) => 
-    if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
+
+// Switch(1, {1, 2, 3}, {"A", "B", "C"}) = "A" 
+// Switch(1, {{1, "A"}, {2, "B"}, {3, "C"}}) = "A"
+Switch = (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
+    let
+       hasPairs = List.First(casesOrPairs) is list,
+       usingPairs = 
+           let
+                targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
+           in
+                if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
+       usingCases = 
+           let
+                cases = casesOrPairs,
+                results = resultsOrDefault
+            in
+                if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
+    in
+        if hasPairs then usingPairs
+        else usingCases
 ],
 
 Result = _extensionLibrary
