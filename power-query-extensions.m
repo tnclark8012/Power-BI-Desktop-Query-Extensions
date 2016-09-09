@@ -62,6 +62,8 @@ TestResults =
 
 _extensionLibrary = [
 
+Document = (name as text, description as text, value as any) => 
+    Value.ReplaceType(value, Value.Type(value) meta [Documentation.Name=name, Documentation.Description=description]),
 ///////////////////////// 
 // Date                //
 /////////////////////////
@@ -316,25 +318,28 @@ Table.RenameAndTransformColumn = (table, currentName as text, newName as text, t
 
 // Switch(1, {1, 2, 3}, {"A", "B", "C"}) = "A" 
 // Switch(1, {{1, "A"}, {2, "B"}, {3, "C"}}) = "A"
-Switch = (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
-    let
-       hasPairs = List.First(casesOrPairs) is list,
-       usingPairs = 
-           let
-                targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
-           in
-                if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
-       usingCases = 
-           let
-                cases = casesOrPairs,
-                results = resultsOrDefault
+Switch = 
+    Document(
+        "Switch", 
+        "Given a value, find it's paired item", 
+        (value as any, casesOrPairs as list, optional resultsOrDefault as any, optional default as any) =>
+            let
+               hasPairs = List.First(casesOrPairs) is list,
+               usingPairs = 
+                   let
+                       targetPosition = List.PositionOf(casesOrPairs, value, Occurrence.First, (case, theValue) => theValue = case{0})
+                   in
+                       if targetPosition = -1 then resultsOrDefault else casesOrPairs{targetPosition}{1},
+               usingCases = 
+                   let
+                       cases = casesOrPairs,
+                       results = resultsOrDefault
+                   in
+                       if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
             in
-                if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
-    in
-        if hasPairs then usingPairs
-        else usingCases
+                if hasPairs then usingPairs else usingCases
+    )
 ],
-
 Result = _extensionLibrary
 in
   Result
