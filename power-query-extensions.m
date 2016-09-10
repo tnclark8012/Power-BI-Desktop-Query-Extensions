@@ -444,7 +444,7 @@ Value.TypeText = (value as any) =>
     if value is time then "time" else
     if value is type then "type" else
     if value is any then "any"
-    else Error "unknown -- not a primitive type!"
+    else error "unknown -- not a primitive type!"
 
 ],
 Result = _extensionLibrary
