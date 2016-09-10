@@ -2,6 +2,30 @@ let
 
 Tests = {
     [ 
+        CaseName = "List.From", 
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                {"A", "B", "C"}, 
+                library[List.From]("{A, B, C}"),
+                "Text should be split on ,")
+    ],
+    [ 
+        CaseName = "List.From - no braces", 
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                {"A", "B", "C"}, 
+                library[List.From]("A, B, C"),
+                "Text should be split on ,")
+    ],
+    [ 
+        CaseName = "List.Flatten", 
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                { 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}, 
+                library[List.Flatten]({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} }),
+                "Flattened list")
+    ],
+    [ 
         CaseName = "Table.RenameColumn", 
         Test = (library as record) => 
             TestUtils[AssertEqual](
@@ -44,7 +68,42 @@ Tests = {
 },
 
 TestUtils = [ 
-    AssertEqual = (expected as any, actual as any, description as text) => if expected = actual then true else error "Expected: " & Text.From(expected) & "; Actual: " & Text.From(actual) & "; Reason: " & description,
+    AssertEqual = (expected as any, actual as any, description as text) => 
+        let
+            expectedType = Value.Type(expected),
+            actualType = Value.Type(actual),
+            listAsText = (list as list) =>
+                "{" & Text.Range(List.Accumulate(expected, "", (state, current) => state & ", " & Text.From(current)), 1) & " }",
+            expectedAsText = if expected is list then listAsText(expected) else Text.From(expected),
+            actualAsText = if expected is list then listAsText(actual) else Text.From(actual),
+            typeAsText = (value as any) => 
+                if value is binary then "binary" else
+                if value is date then "date" else
+                if value is datetime then "datetime" else
+                if value is datetimezone then "datetimezone" else
+                if value is duration then "duration" else
+                if value is function then "function" else
+                if value is list then "list" else
+                if value is logical then "logical" else
+                if value is none then "none" else
+                if value is null then "null" else
+                if value is number then "number" else
+                if value is record then "record" else
+                if value is table then "table" else
+                if value is text then "text" else
+                if value is time then "time" else
+                if value is type then "type" else
+                if value is any then "any"
+                else "unknown -- not a primitive type!"
+        in
+            if not Value.Is(actualType, Value.Type(expectedType)) then 
+                error "Expected type " & typeAsText(expectedType) & " does not match actual type " & typeAsText(actualType) 
+//            else if expected is list then
+//                List.Count(
+            else if expected = actual then 
+                true
+            else if expectedAsText = actualAsText then error "Cannot provide accurate failure message! Text versions of expected and actual are identical, but they failed the equality test!"
+            else error "Expected: " & expectedAsText & "; Actual: " & actualAsText & "; Reason: " & description,
     SimpleTable = Table.FromRecords({[TextCol = "A", NumberCol = "1"], [TextCol = "B", NumberCol = 2], [TextCol = "C", NumberCol = 3]})
 ],
 
@@ -119,21 +178,36 @@ Date.MonthName  = (date as any) =>
 /////////////////////////
 // List                //
 /////////////////////////
-List.Flatten = (list as list) => 
-    // PQX[List.Flatten]({1, 2,Table.FromRecords({[x=1]}),  {3,4,5}}) = {1,2,Table.FromRecords({[x=1]}),3,4,5}
-    List.Accumulate(list, {}, (state, current) =>
+List.Flatten = Document(
+    "List.Flatten",
+    "Recursively flattens list elements. The end result is a single list",
+    { [ Description = "Flattening nested lists into one", Code = "List.Flatten({ 1, 2, Table.FromRecords({[x=1]}), {3, 4, 5} })", Result = "{ 1, 2, Table.FromRecords({[x=1]}), 3, 4, 5}"] },
+    (list as list) => List.Accumulate(list, {}, (state, current) =>
         let
             currentListContent = if current is list then @List.Flatten(current) else {current}
         in
             List.Combine({state, currentListContent})
-    ),
-List.From = (simpleTextList as text) =>
-    let
-        trimWhitespace = Text.Trim(simpleTextList),
-        listToSplit = Text.TrimEnd(Text.TrimStart(trimWhitespace, "{"), "}"),
-        Result = Text.Split(listToSplit, ",")
-    in
-        Result,
+    )
+),
+List.From = Document(
+    "List.From", 
+    "Converts a text representation of a list into a list of the elements. Items are considered to be split by ,",
+    { [ Description = "Convert a text list", Code = "List.From(""{A, B, C}"")", Result = "{ ""A"", ""B"", ""C"" }"] },
+    (simpleTextList as text) =>
+        let
+            trimWhitespace = Text.Trim(simpleTextList),
+            listToSplit = Text.TrimEnd(Text.TrimStart(trimWhitespace, "{"), "}"),
+            Result = List.Transform(Text.Split(listToSplit, ","), each Text.Trim(_))
+        in
+            Result
+),
+List.ToText = Document(
+    "List.ToText",
+    "Converts a list to a textual representation. Inverse of List.From",
+    { [ Description = "Conver to text", Code = "List.ToText({ 1, 2, 3})", Result = """{1, 2, 3}"""] },
+    (list as list) =>
+            List.Accumulate(list, "{", (state, current) => current & Text.From(current)) & "}"
+),
 /////////////////////////
 // Number              //
 /////////////////////////
@@ -350,7 +424,28 @@ Switch =
                        if List.IsEmpty(cases) or List.IsEmpty(results) then default else if value = List.First(cases) then List.First(results) else @Switch(value, List.Skip(cases, 1), List.Skip(results, 1), default)
             in
                 if hasPairs then usingPairs else usingCases
-    )
+    ),
+
+Value.TypeText = (value as any) => 
+    if value is binary then "binary" else
+    if value is date then "date" else
+    if value is datetime then "datetime" else
+    if value is datetimezone then "datetimezone" else
+    if value is duration then "duration" else
+    if value is function then "function" else
+    if value is list then "list" else
+    if value is logical then "logical" else
+    if value is none then "none" else
+    if value is null then "null" else
+    if value is number then "number" else
+    if value is record then "record" else
+    if value is table then "table" else
+    if value is text then "text" else
+    if value is time then "time" else
+    if value is type then "type" else
+    if value is any then "any"
+    else Error "unknown -- not a primitive type!"
+
 ],
 Result = _extensionLibrary
 in
