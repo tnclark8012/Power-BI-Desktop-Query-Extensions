@@ -237,13 +237,18 @@ List.ToText = Document(
 // Number              //
 /////////////////////////
 Number.Digits = {0,1,2,3,4,5,6,7,8,9},
-Number.ParseText = (text as text, optional startIndex as number, optional allowCharacters as list) => 
-    let
-        consider = if startIndex is null then text else Text.Range(text,startIndex), 
-        _allowCharacters = if allowCharacters is null then {} else allowCharacters,
-        numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
-    in 
-        if text is null then null else Text.FromList(numberSeries),
+Number.ParseText = Document(
+    "Number.ParseText",
+    "Returns the first number (1+ consecutive digits) in the given text. Optionally, provide allowed characters to ignore them",
+    {[ Description = "Allow commas", Code="PBI[Number.ParseText](""It's over 9,000!"", 0, {"",""})", Result = "9000" ]},
+    (text as text, optional startIndex as number, optional allowCharacters as list) => 
+        let
+            consider = if startIndex is null then text else Text.Range(text,startIndex), 
+            _allowCharacters = if allowCharacters is null then {} else allowCharacters,
+            numberSeries = List.FirstN(List.Skip(Text.ToList(consider), each not Text.IsNumber(_)), each Text.IsNumber(_) or List.Contains(_allowCharacters, _))
+        in 
+            if text is null then null else Text.FromList(numberSeries)
+),
 
 /////////////////////////
 // Splitters           //
