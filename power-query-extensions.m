@@ -1,5 +1,9 @@
 let
 
+MissingTests = List.Select(Record.FieldNames(_extensionLibrary), each not 
+    List.MatchesAny(Tests, (testRecord as record) => Text.Contains(testRecord[CaseName], _))),
+MissingDocumentation = List.Select(Record.FieldNames(_extensionLibrary), each not
+    Record.HasFields(Value.Metadata(Value.Type(Record.Field(_extensionLibrary, _))), "Documentation.Examples")),
 Tests = {
     [ 
         CaseName = "List.From", 
@@ -313,7 +317,28 @@ Table.DrillIntoColumn = (table as table, columnName as text) =>
           Result = Table.TransformColumns(table, {{columnName, FindValue}})
       in
          Result,
-
+    
+Table.EnterDataFormula = 
+    Document(
+        "Table.EnterDataFormula",
+        "Convert a table into a formula that's compatible with the Enter Data UI. This function returns an expression you can copy and paste to editthe " &
+            " table using Enter Data. Paste the formula, then click the gear icon next to the step name. This is an easy way to allow people to customize a table you've queried",
+        {[ 
+            Description = "Simple table", 
+            Code = "Web.Page(Web.Contents(""https://en.wikipedia.org/wiki/List_of_Super_Bowl_champions"")){3}[Data]", 
+            Result = "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""jVVtb9s2EP4rRD4aRqI3S9TH2Gm7ZWkb1MGGom6Aq83IhBkyoOik2a8fT6Ski6Fu+yDdWea9Pffc8du3M342P7uVzrU/jrbZs7UTQgnb+q+lfzL/nFeLxIu0ror55pglWcK8viA6J3o96vVwJksSqvNRT5Ognn2fh1yuQClo2cq8/DCvmMbCPzmmUWaLkEYyn2GkNIhFEFUQvBN1FkQexGI2uP8kXtg73SjQO3YLzkrjMEgRn/NFEmrlpL66JLmnRM+JXhC9IvWR82lxWqvQz8KypTV6a9pYJxZ5nlex1mpMg5dEp98p5OR7TWEmqaYLkgY2eQ2avbegt7LdGlbUof1dApgLz/MASQCcF0EEpH3wDuJiNkfXWUAabT9YITRbwqvHeXsIPovBZ4S5jDWl3kdZjbqHfBbKmXUkGd1iA78ae2AfJGg36ZRH46QzTqKIrtLR1Wc4IA82FzemZZe68cRv2ReQu5Bs3vO/7JOt5kixEt886d45Vp1kg8u/oN1L3Tij2Rexaw9ST3qqAj95FIGmPFC4Jhl+lPAo2ZVRT/vgKeuHoeg9pWT2MqLnhCDkO6ccROSWoJx8NFZsLn7XO48pPBklcQCV6yNmdDJKPrbJj+LIejol9UmUj1Jr0RoH7E/pQWnQc9LPXNJ7ronngEkVyFaVszHh48MDKMOWUqlJN3VCZoDAUxMY6pwkiIASCmwu1u6c3ZijRDY8tpFeHQh5nIUq0r4O3Iotw//WApxTgnm5h5fDhHW3DGdhKDtRBOuMdsNHfhZDy7vCYoEdo8dhzkghePQP0C3uT+le2WovxUOfQfqmieX8Hkeuvh8M/eEtNB5XAXbShoesk3JM93YvFewE0hPYO2g8ejHbjHaExxEkha6kXzdag5M+oG5ATRuS9nF+UukKrGeqBr9ftNuHmT3xgDs6LKZ4BaR0g1wL1xdKAUaK3w+n7+DxCbo1tjxut6CFsFNGuAXehvhslfC9YGuQejIOjslogkv4SgrfgNUebDOWk77hNh1f/OfS+RXmx+o9qK3R0zZ8jHIncA5bIdiddPCL8/VpDCv/Nh5nD/jO460mrPBSD1Hw10qJZ9Fdsf5qexmi4IOuUxzXT5uLy8HgSjhrpGM30vyP09f+PmmNfvYLQLBraI5g/9voN3NscS3fiZ/wbzG+/wM="", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type text) meta [Serialized.Text = true]) in type table [Appearances = _t, Team = _t, Wins = _t, Losses = _t, Winning 
+percentage = _t, Season(s) = _t])"
+        ]},
+        (table as table) =>
+            let
+                Encoded = Table.JsonEncode(table),
+                ColumnMeta= "[" & Text.Range(List.Accumulate(Table.ColumnNames(table), "", (state, current) => state & ", " & current & " = _t"), 2) & "]",
+                Text = 
+                    "Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText(""" & Encoded & """, BinaryEncoding.Base64), Compression.Deflate))," & 
+                    " let _t = ((type text) meta [Serialized.Text = true]) in type table " & ColumnMeta & ")"
+            in
+                Text
+    ),
 // if fieldNames aren't specified, use the field names from the first row of the column.
 Table.ExpandRecordColumn = (table as table, columnName as text, optional fieldNames as list, optional newColumnNames as nullable list) => 
   let
@@ -347,6 +372,21 @@ Table.FromListCrossJoin = (listColumnNamePairs as any) =>
        Result = doStuff(firstTable, remainingPairs)
    in
        Result,
+
+Table.JsonDecode = (encoded as text) =>
+    let
+        Decompressed = Binary.Decompress(Binary.FromText(encoded, BinaryEncoding.Base64), Compression.Deflate),
+        Decoded = Table.FromRows(Json.Document(Decompressed), let _t = ((type text) meta [Serialized.Text = true]) in type table [Name = _t, Number = _t])
+    in
+        Decoded,
+Table.JsonEncode = (table as table) =>
+    let
+        Rows = Table.ToRows(table),
+        Json = Json.FromValue(Rows),
+        Compressed = Binary.Compress(Json, Compression.Deflate),
+        Encoded = Binary.ToText(Compressed, BinaryEncoding.Base64)
+    in
+        Encoded,
 
 // Replaces a value if it matches a predicate
 Table.ReplaceValueIf = (table as table, replaceIf as function, after as any, columnNameOrList as any) => 
