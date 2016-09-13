@@ -24,6 +24,9 @@ With minimal exception, all pull requests should include testing for the changes
                 "Failure output")
 ]
 ~~~~
+To run your test, simply click on the TestResults step
+
+
 
 ## Do - Alphabetize your test and function
 Keeping function and test declarations alphabetical allows users and contributors to quickly find functions
