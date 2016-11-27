@@ -267,7 +267,7 @@ Number.ToLetters = Document(
         "Converts a number  (starting at 1) to an alphabet representation. Works like column headers in Excel.",
         {[ 
             Description = "Column 27", 
-            Code = "pqx[Number.ToLetters](27)", 
+            Code = "PBI[Number.ToLetters](27)", 
             Result = "AB"
         ]},
         (value as number) =>
