@@ -30,6 +30,18 @@ Tests = {
                 "Flattened list")
     ],
     [ 
+        CaseName = "Number.ToLetters", 
+        Test = (library as record) => 
+            TestUtils[AssertEqual](
+                { "A", "BC", "BAD" }, 
+                { 
+                    library[Number.ToLetters](1),
+                    library[Number.ToLetters](55),
+                    library[Number.ToLetters](1382)
+                },
+                "1, 2, and 3 letter translations")
+    ],
+    [ 
         CaseName = "Table.RenameColumn", 
         Test = (library as record) => 
             TestUtils[AssertEqual](
@@ -250,7 +262,32 @@ Number.ParseText = Document(
         in 
             if text is null then null else Text.FromList(numberSeries)
 ),
-
+Number.ToLetters = Document(
+        "Number.ToLetters",
+        "Converts a number  (starting at 1) to an alphabet representation. Works like column headers in Excel.",
+        {[ 
+            Description = "Column 27", 
+            Code = "pqx[Number.ToLetters](27)", 
+            Result = "AB"
+        ]},
+        (value as number) =>
+            let
+                GetLetter = (num as number) => 
+                    let 
+                        number = Number.Mod(num, 26),
+                        val = if number = 0 then 26 else number,
+                        valid = number < 26 and number > 0 
+                    in 
+                        if valid then Text.At(Text.Alphabet, val - 1) else error "Can't get letter for " & Text.From(num),
+                func = (value as number, factor as number) =>
+                    let
+                        ThisLetter = GetLetter(Number.RoundDown(value/Number.Power(26, factor))),
+                        Result = if value <= Number.Power(26, factor) then "" else @func(value, factor+1) & ThisLetter
+                    in
+                        Result
+            in
+                if value <= 26 then GetLetter(value) else func(value, 1) & GetLetter(value)
+),
 /////////////////////////
 // Splitters           //
 /////////////////////////
