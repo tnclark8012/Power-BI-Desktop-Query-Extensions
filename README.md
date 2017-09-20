@@ -13,12 +13,12 @@ PBI Desktop (and Excel 2016) Query Functions that you can use to make life easy-
 #### Option 1: Always get the latest from GitHub - Requires data privacy considersations
 Copying the below will give you the latest versions and all times. You can connect with anonymous credentials. Be sure to set the data privacy level appropriately when prompted.
 ~~~
-Expression.Evaluate(Text.FromBinary(Web.Contents("https://raw.githubusercontent.com/tnclark8012/Power-BI-Desktop-Query-Extensions/master/power-query-extensions.m")),#shared)
+Expression.Evaluate(Text.FromBinary(Web.Contents("https://raw.githubusercontent.com/tnclark8012/Power-BI-Desktop-Query-Extensions/master/power-query-extensions.pq")),#shared)
 ~~~
 
 
 #### Option 2: Copy the current version locally - No issues with data privacy
-Copy paste the contents from https://raw.githubusercontent.com/tnclark8012/Power-BI-Desktop-Query-Extensions/master/power-query-extensions.m
+Copy paste the contents from https://raw.githubusercontent.com/tnclark8012/Power-BI-Desktop-Query-Extensions/master/power-query-extensions.pq
 
 ![AdvancedEditor](https://cloud.githubusercontent.com/assets/1501159/18407241/dfa28b60-76bf-11e6-8a5e-ce0a70063de0.PNG)
 
